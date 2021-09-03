@@ -52,7 +52,7 @@ history = CNN.fit(
 )
 CNN.save('Seperate_2D_3D.h5')
 
-fig = plt.figure()
+'''fig = plt.figure()
 
 ax_acc = fig.add_subplot(111)
 
@@ -67,7 +67,23 @@ ax_loss.plot(range(epochs), history['val_loss'], label='loss', color='darkblue')
 plt.text(3, 2.2, "<----------------loss", verticalalignment='top', horizontalalignment='left')
 plt.ylabel('loss')
 ax_loss.yaxis.tick_right()
-ax_loss.grid(linestyle='--', color='lavender')
+ax_loss.grid(linestyle='--', color='lavender')'''
+
+plt.plot(history.history['accuracy'])
+plt.plot(history.history['val_accuracy'])
+plt.title('Model accuracy')
+plt.xlabel('Epoch')
+plt.ylabel('Accuracy')
+plt.legend(['Train', 'Test'], loc='upper left')
+plt.show()
+
+plt.plot(history.history['loss'])
+plt.plot(history.history['val_loss'])
+plt.title('Model loss')
+plt.xlabel('Epoch')
+plt.ylabel('Loss')
+plt.legend(['Train', 'Test'], loc='upper left')
+plt.show()
 
 test_num = cv2.imread(r'C:\Users\Bouls\Desktop\img\15\15_000.png')
 test_num = cv2.resize(test_num,(48,85))
