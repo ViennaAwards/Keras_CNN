@@ -1,0 +1,119 @@
+import numpy as np
+import tensorflow as tf
+from tensorflow.keras.models import Sequential
+from tensorflow.keras.layers import Dropout, Activation, Dense
+from tensorflow.keras.layers import Flatten, Convolution2D, MaxPooling2D
+from tensorflow.keras.models import load_model
+import cv2
+from tensorflow import keras
+from tensorflow.keras import optimizers
+from tensorflow.keras import utils
+from tensorflow.keras import models, layers
+from tensorflow.keras import datasets
+from tensorflow.keras.callbacks import EarlyStopping
+from tensorflow.keras.layers import Dense,Dropout,Flatten,Conv2D,MaxPooling2D
+import os
+import numpy as np
+import matplotlib.pyplot as plt
+from tensorflow.python.client import device_lib
+#gpus = tf.config.list_physical_devices('GPU')
+#print(device_lib.list_local_devices())
+
+X_train, X_test, Y_train, Y_test = np.load(r'./2D_3D_classification.npy',allow_pickle=True)
+categories = os.listdir(r'C:\Users\Bouls\Desktop\Seperate_2D_3D')
+nb_classes=2
+
+CNN = models.Sequential()
+CNN.add(layers.Conv2D(128, (3,3), activation='relu',input_shape=X_train.shape[1:]))
+CNN.add(layers.MaxPooling2D((2,2)))
+CNN.add(layers.Conv2D(256, (3,3), activation='relu'))
+CNN.add(layers.MaxPooling2D((2,2)))
+CNN.add(layers.Conv2D(512, (3,3), activation='relu'))
+CNN.add(layers.MaxPooling2D((2,2)))
+CNN.add(layers.Conv2D(1024, (3,3), activation='relu'))
+CNN.add(layers.Flatten())
+CNN.add(layers.Dense(1024, activation='relu'))
+CNN.add(layers.Dense(nb_classes, activation='softmax'))
+CNN.summary()
+
+CNN.compile(optimizer = 'adam',
+loss = 'categorical_crossentropy',
+metrics = ['accuracy'])
+
+early_stopping = EarlyStopping(monitor='val_loss',patience=10)
+
+history = CNN.fit(
+    X_train, Y_train,
+    epochs = 100, 
+    batch_size = 16,
+    validation_data=(X_test,Y_test),
+    shuffle=True,
+    callbacks=[early_stopping]
+)
+CNN.save('Seperate_2D_3D.h5')
+
+fig = plt.figure()
+
+ax_acc = fig.add_subplot(111)
+
+ax_acc.plot(range(epochs), history['val_acc'], label='accuracy(%)', color='darkred')
+plt.text(3, 14.7, "<----------------accuracy(%)", verticalalignment='top', horizontalalignment='right')
+plt.xlabel('epochs')
+plt.ylabel('accuracy(%)')
+ax_acc.grid(linestyle='--', color='lavender')
+
+ax_loss = ax_acc.twinx()
+ax_loss.plot(range(epochs), history['val_loss'], label='loss', color='darkblue')
+plt.text(3, 2.2, "<----------------loss", verticalalignment='top', horizontalalignment='left')
+plt.ylabel('loss')
+ax_loss.yaxis.tick_right()
+ax_loss.grid(linestyle='--', color='lavender')
+
+test_num = cv2.imread(r'C:\Users\Bouls\Desktop\img\15\15_000.png')
+test_num = cv2.resize(test_num,(48,85))
+test_num = np.array(test_num,'uint8')
+test_num = test_num.reshape((1, 48, 85, 3))
+predictions=CNN.predict(test_num)
+print(predictions)
+
+def plot_image(i,predictions_array,true_label,img):
+    predictions_array,true_label,img = predictions_array[i],true_label[i],img[i]
+    plt.grid(False)
+    plt.xticks([])
+    plt.yticks([])
+    
+    plt.imshow(img,cmap=plt.cm.binary)
+    
+    predicted_label = np.argmax(predictions_array)
+    if predicted_label == np.argmax(true_label):
+        color='blue'
+    else:
+        color='red'
+    
+    plt.xlabel("{}{:2.0f}%({})".format(categories[predicted_label],
+                                       100*np.max(predictions_array),
+                                       categories[np.argmax(true_label)]),
+                                       color=color)
+
+def plot_value_array(i,predictions_array,true_label):
+    predictions_array,true_label = predictions_array[i],true_label[i]
+    plt.grid(False)
+    plt.xticks([])
+    plt.yticks([])
+    thisplot = plt.bar(range(nb_classes),predictions_array,color="#777777")
+    plt.ylim([0,1])
+    predicted_label = np.argmax(predictions_array)
+    
+    thisplot[predicted_label].set_color('red')
+    thisplot[np.argmax(true_label)].set_color('blue')
+    
+   num_rows = 1
+num_cols = 1
+num_images = num_rows*num_cols
+plt.figure(figsize=(2*2*num_cols,2*num_rows))
+for i in range(num_images):
+    plt.subplot(num_rows,2*num_cols,2*i+1)
+    plot_image(i,predictions,Y_test,test_num)
+    plt.subplot(num_rows,2*num_cols,2*i+2)
+    plot_value_array(i,predictions,Y_test)
+plt.show()
