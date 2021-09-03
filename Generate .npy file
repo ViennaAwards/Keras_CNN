@@ -1,0 +1,52 @@
+import tensorflow as tf
+from tensorflow import keras
+from tensorflow.keras import optimizers
+from tensorflow.keras import utils
+from tensorflow.keras import models, layers
+from tensorflow.keras import datasets
+from tensorflow.keras.callbacks import EarlyStopping
+from tensorflow.keras.layers import Dense,Dropout,Flatten,Conv2D,MaxPooling2D
+from sklearn.model_selection import train_test_split
+import os
+import cv2
+import numpy as np
+import matplotlib.pyplot as plt
+from PIL import Image
+from tqdm import tqdm
+
+file_path= r'C:\Users\Bouls\Desktop\Seperate_2D_3D'
+categories = os.listdir(r'C:\Users\Bouls\Desktop\Seperate_2D_3D')
+print(categories)
+
+nb_classes=2
+
+def FilePathImageRead ( filePath ) :
+    stream = open( filePath.encode("utf-8") , "rb") 
+    bytes = bytearray(stream.read()) 
+    numpyArray = np.asarray(bytes, dtype=np.uint8) 
+    return cv2.imdecode(numpyArray , cv2.IMREAD_UNCHANGED
+    
+image_w = 64
+image_h = 64
+  
+X = []
+Y = []
+
+for idex, categorie in tqdm(enumerate(categories)):
+    label = [0 for i in range(nb_classes)]
+    label[idex] = 1
+    image_dir = file_path +'/'+categorie+'/'
+    for top, dir, f in os.walk(image_dir):
+        print(len(f))
+        print(image_dir)
+        for filename in f:
+            img = FilePathImageRead(image_dir+filename)
+            img = cv2.resize(img, dsize=(1024,768))
+            img = cv2.resize(img, None, fx=image_w/img.shape[0], fy=image_h/img.shape[1])
+            #temp = Image.fromarray(img)
+            #os.makedirs("F:/declan_src/resized_image/"+filename.split('_')[0], exist_ok = True)
+            #temp.save("F:/declan_src/resized_image/"+filename.split('_')[0]+'/'+filename)
+            X.append(img/256)
+            Y.append(label)
+X=np.array(X)
+Y=np.array(Y)
